@@ -20,7 +20,7 @@ class AppointmentForm {
     }
 
     const schema = Yup.object().shape({
-      name: Yup.string().min(3).required('*'),
+      name: Yup.string().min(3).required('Nome Inválido'),
       birthday: Yup.date().required('Data de Nascimento Inválida'),
       schedulingDate: Yup.date().required('Data de Agendamento Inválida'),
     })
@@ -32,12 +32,14 @@ class AppointmentForm {
     }
 
     if (
-      body.schedulingDate.getHours() < 6 ||
+      body.schedulingDate.getHours() < 8 ||
       (body.schedulingDate.getMinutes() > 0 &&
         body.schedulingDate.getMinutes() < 30) ||
       (body.schedulingDate.getMinutes() > 30 &&
         body.schedulingDate.getMinutes() <= 59) ||
-      body.schedulingDate.getHours() > 18
+      body.schedulingDate.getHours() > 17 ||
+      (body.schedulingDate.getHours() > 17 &&
+        body.schedulingDate.getMinutes() > 0)
     ) {
       return res.status(400).json({ message: 'Horário inválido' })
     }
@@ -110,8 +112,10 @@ class AppointmentForm {
 
     body.check = false
 
-    const user = await AppointmentModel.create(body)
-    return res.json({ data: user })
+    await AppointmentModel.create(body)
+    return res.json({
+      message: 'Agendamento Realizado!',
+    })
   }
 
   async remove(req, res) {
@@ -138,11 +142,15 @@ class AppointmentForm {
       params: { id },
     } = req
 
-    const user = await AppointmentModel.findByIdAndUpdate(id, body, {
-      new: true,
-    })
+    try {
+      await AppointmentModel.findByIdAndUpdate(id, body, {
+        new: true,
+      })
 
-    res.send({ data: user })
+      return res.json({ message: 'Situação Alterada!' })
+    } catch (error) {
+      return res.status(400).send({ message: error.message })
+    }
   }
 }
 
